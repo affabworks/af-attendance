@@ -4,6 +4,7 @@ import { SUPABASE_URL } from './config.js';
 import { sb, rpc, empSession, lastRole } from './api.js';
 import { EmployeeApp } from './employee.js';
 import { AdminApp } from './admin.js';
+import { registerSW } from './push.js';
 
 /* لو حصل خطأ غير متوقع نعرضه بدل شاشة بيضاء (مفيد على الموبايل) */
 function showFatal(msg) {
@@ -113,4 +114,5 @@ function Root() {
   return html`${body}<${ToastHost} />`;
 }
 
+registerSW();
 render(html`<${Root} />`, document.getElementById('app'));

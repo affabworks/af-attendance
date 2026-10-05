@@ -2,6 +2,7 @@
 import { html, useState, useEffect, useMemo, Icon, Pill, Avatar, Empty, Field, Segmented, Sheet, Hero, BottomNav, NotifSheet, Splash, toast } from './ui.js';
 import { sb, rpc, qrDataUrl } from './api.js';
 import * as L from './lib.js';
+import { pushState, enablePush, disablePush } from './push.js';
 
 const must = (r) => { if (r.error) throw r.error; return r.data; };
 const errMsg = (e) => ({ forbidden: 'مش مسموحلك بالعملية دي', bad_pin: 'الرقم السري لازم يكون من 4 لـ 8 أرقام' }[e && e.message] || (e && e.message) || 'حصلت مشكلة');
@@ -502,6 +503,35 @@ function FinalSheet({ s, onClose }) {
 }
 
 /* ===================== الإعدادات ===================== */
+
+function PushCard() {
+  const [st, setSt] = useState('loading');
+  const [busy, setBusy] = useState(false);
+  const refresh = async () => setSt(await pushState());
+  useEffect(() => { refresh(); }, []);
+  async function on() {
+    setBusy(true);
+    try { await enablePush(); toast('تم تفعيل الإشعارات على الجهاز ده ✅'); }
+    catch (e) { toast(e && e.message === 'denied' ? 'لازم تسمح بالإشعارات من المتصفح' : 'مقدرناش نفعّل الإشعارات، جرّب تاني', 'bad'); }
+    await refresh(); setBusy(false);
+  }
+  async function off() {
+    setBusy(true);
+    try { await disablePush(); toast('تم إيقاف الإشعارات على الجهاز ده'); } catch (e) { toast('حصلت مشكلة، جرّب تاني', 'bad'); }
+    await refresh(); setBusy(false);
+  }
+  return html`<section class="card">
+    <div class="h3"><${Icon} name="bell" size=${19} /> إشعارات الطلبات على الجهاز</div>
+    <div class="soft">يوصلك إشعار على الجهاز ده لما موظف يطلب سلفة أو إجازة، حتى لو الابلكيشن مقفول. فعّلها على كل جهاز عايز الإشعار يوصله.</div>
+    ${st === 'ios' && html`<div class="note bad"><${Icon} name="alert" size=${18} /> على الآيفون: افتح الابلكيشن من Safari ← زرار المشاركة ← "إضافة إلى الشاشة الرئيسية"، وبعدين افتحه من الأيقونة وفعّل الإشعارات.</div>`}
+    ${st === 'unsupported' && html`<div class="note bad"><${Icon} name="alert" size=${18} /> المتصفح ده مش بيدعم الإشعارات.</div>`}
+    ${st === 'denied' && html`<div class="note bad"><${Icon} name="alert" size=${18} /> الإشعارات محظورة لهذا الموقع. فعّلها من إعدادات المتصفح أو الجهاز وبعدين ارجع هنا.</div>`}
+    ${st === 'on' && html`<div class="note ok"><${Icon} name="check" size=${18} /> الإشعارات شغالة على الجهاز ده</div>
+      <button class="btn ghost sm" disabled=${busy} onClick=${off}>إيقاف على الجهاز ده</button>`}
+    ${st === 'off' && html`<button class="btn sm" disabled=${busy} onClick=${on}><${Icon} name="bell" size=${20} /> ${busy ? 'لحظة...' : 'فعّل الإشعارات على الجهاز ده'}</button>`}
+  </section>`;
+}
+
 function SettingsTab({ A }) {
   const { S } = A;
   const [locating, setLocating] = useState(false);
@@ -535,6 +565,7 @@ function SettingsTab({ A }) {
   const N = (k) => (e) => setNum({ ...num, [k]: e.target.value });
 
   return html`<div class="stack">
+    <${PushCard} />
     <section class=${'card ' + (mismatch ? 'warnbox' : '')}>
       <div class="h3"><${Icon} name="cal" size=${19} /> أسبوع العمل الحالي</div>
       <div class="soft">المسجل دلوقتي: <b>${L.fmtDateAr(S.current_week_start)} ← ${L.fmtDateAr(L.weekEndOf(S.current_week_start))}</b></div>
