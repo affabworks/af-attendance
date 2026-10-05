@@ -1,6 +1,6 @@
 {
-  "name": "AF Fabworks — الحضور والمرتبات",
-  "short_name": "AF الحضور",
+  "name": "AF Attendance",
+  "short_name": "AF Attendance",
   "lang": "ar",
   "dir": "rtl",
   "start_url": "./index.html",
